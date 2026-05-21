@@ -1,0 +1,23 @@
+services:
+  # 关系型数据库：用于未来 Prisma 存储用户对话历史、Agent 状态
+  mysql:
+    image: mysql:8
+    container_name: ai_workflow_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./volumes/mysql_data:/var/lib/mysql
+
+  # 向量数据库：用于 RAG 存储规范文本的向量片段
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: ai_workflow_chroma
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./volumes/chroma_data:/chroma/data
