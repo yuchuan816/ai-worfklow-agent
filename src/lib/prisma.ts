@@ -20,10 +20,7 @@ const prismaClientSingleton = () => {
   // 此时将适配器传入，TypeScript 类型校验通过，且不会再索要 accelerateUrl
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV !== 'production'
-        ? ['error']
-        : ['query', 'error', 'warn'],
+    log: process.env.NODE_ENV !== 'production' ? ['error'] : ['query', 'error', 'warn'],
   });
 };
 

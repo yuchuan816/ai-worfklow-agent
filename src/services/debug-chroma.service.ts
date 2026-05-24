@@ -12,7 +12,7 @@ export class ChromaDebugService {
       collections: collections.map((c) => ({
         name: c.name,
         metadata: c.metadata,
-        id: (c as any).id,
+        id: c.id,
       })),
     };
   }
@@ -45,10 +45,7 @@ export class ChromaDebugService {
 
     await collection.upsert({
       ids: ['test_id_1', 'test_id_2'],
-      documents: [
-        '这是一条测试用的知识库文档数据。',
-        'Ollama 联动 Chroma 部署成功。',
-      ],
+      documents: ['这是一条测试用的知识库文档数据。', 'Ollama 联动 Chroma 部署成功。'],
       metadatas: [{ source: 'debug' }, { source: 'debug' }],
     });
 

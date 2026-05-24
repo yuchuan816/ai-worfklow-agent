@@ -21,3 +21,17 @@ services:
       - '8000:8000'
     volumes:
       - ./volumes/chroma_data:/chroma/data
+
+  # OSS
+  minio:
+    image: minio/minio:latest
+    container_name: local-minio
+    ports:
+      - '9000:9000' # API 端口（代码连接这个）
+      - '9001:9001' # Web 管理后台端口
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    volumes:
+      - ./volumes/minio_data:/data
+    command: server /data --console-address ":9001"

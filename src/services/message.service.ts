@@ -12,11 +12,7 @@ export class MessageService {
   }
 
   // 原子化持久化 AI 的最终回答与深度思考链
-  async saveAssistantMessage(
-    sessionId: string,
-    content: string,
-    reasoning: string,
-  ) {
+  async saveAssistantMessage(sessionId: string, content: string, reasoning: string) {
     return await prisma.message.create({
       data: {
         sessionId,

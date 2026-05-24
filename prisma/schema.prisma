@@ -13,6 +13,8 @@ model ChatSession {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]
+
+  @@map("chat_sessions")
 }
 
 model Message {
@@ -25,4 +27,26 @@ model Message {
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+  @@map("messages")
+}
+
+model File {
+  id        String      @id @default(uuid())
+  fileName  String      @map("file_name")
+  ossKey    String      @map("oss_key") // 存储在 MinIO 中的唯一 Object Key
+  fileSize  Int         @map("file_size")
+  createdAt DateTime    @default(now()) @map("created_at")
+  chunks    FileChunk[]
+
+  @@map("files")
+}
+
+model FileChunk {
+  id             String @id @default(uuid())
+  fileId         String @map("file_id")
+  chunkIndex     Int    @map("chunk_index") // 切片排序索引 (0, 1, 2...)
+  contentPreview String @map("content_preview") @db.Text // 存储纯文本，用于兜底或普通展示
+  file           File   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("file_chunks")
 }
