@@ -1,23 +1,66 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { chromaClient } from '@/lib/chroma';
+// app/api/debug-chroma/route.ts
+import { type NextRequest, NextResponse } from 'next/server';
+import { ChromaDebugService } from './service';
 
-export async function GET(request: NextRequest) {
+const service = new ChromaDebugService();
+
+/**
+ * 【GET】获取数据
+ * - /api/debug-chroma            -> 查看所有集合
+ * - /api/debug-chroma?name=xxx   -> 查看特定集合详情
+ */
+export async function GET(req: NextRequest) {
+  const name = req.nextUrl.searchParams.get('name');
+
   try {
-    const { searchParams } = new URL(request.url);
-    const name = searchParams.get('name');
+    const data = name
+      ? await service.getCollectionInfo(name)
+      : await service.listAllCollections();
 
-    // 如果 collection 不存在，此处会抛出异常
-    const collection = await chromaClient.getCollection({
-      name: name ?? 'spec_collection',
-    });
+    return NextResponse.json({ success: true, ...data });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
+  }
+}
 
-    const data = await collection.get({
-      limit: 10,
-      include: ['documents', 'metadatas'],
-    });
+/**
+ * 【POST】初始化/添加测试集合与数据
+ * - /api/debug-chroma
+ */
+export async function POST() {
+  try {
+    const result = await service.initTestCollection();
+    return NextResponse.json({ success: true, ...result });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
+  }
+}
 
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: error }, { status: 500 });
+/**
+ * 【DELETE】删除指定集合
+ * - /api/debug-chroma?name=xxx
+ */
+export async function DELETE(req: NextRequest) {
+  const name = req.nextUrl.searchParams.get('name');
+  if (!name)
+    return NextResponse.json(
+      { success: false, error: '缺少 name 参数' },
+      { status: 400 },
+    );
+
+  try {
+    const result = await service.deleteCollection(name);
+    return NextResponse.json({ success: true, ...result });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
   }
 }

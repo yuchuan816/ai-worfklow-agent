@@ -1,69 +1,51 @@
-import { NextResponse } from 'next/server';
-import { ragService } from '@/services/ragService';
+import { streamText, convertToModelMessages } from 'ai';
+import { ollama } from 'ollama-ai-provider-v2';
+import { VectorService } from '@/services/vector.service';
+import { MessageService } from '@/services/message.service';
 
-export async function GET() {
+const vectorService = new VectorService();
+const messageService = new MessageService();
+
+export async function POST(req: Request) {
+  const { messages, sessionId } = await req.json();
+  const latestUserMessage = messages[messages.length - 1]?.content || '';
+
+  // 【知识检索】去本地 Chroma 寻找与当前用户提问语义相近的本地文档
+  let contextDocs: string[] = [];
   try {
-    // 1. 【注入种子数据】硬编码将测试规范塞入 Chroma 物理容器
-    // await ragService.seedMockData();
-
-    // 2. 【硬编码模拟用户提问】故意提问一个直击私有规范核心的问题
-    const MOCK_USER_QUERY =
-      '为什么我的 TypeScript 代码里，可选属性写了 undefined 会被狂轰报错啊？';
-
-    // 3. 【执行 RAG 检索】调用 qwen3-embedding 计算提问向量，并去 Chroma 捞出最相关条文
-    const relevantDoc = await ragService.queryRelevantDocs(MOCK_USER_QUERY);
-
-    // 4. 【拼装工业级 Prompt】注入检索出来的上下文，彻底锁死大模型的幻觉
-    const formattedPrompt = `你是一个严谨的全栈架构师导师。请结合给定的【内部规范】来回答用户的疑问。
-如果用户的行为违反了规范，请严厉且精准地指出问题根源。
-
-【内部规范开始】
-${relevantDoc}
-【内部规范结束】
-
-【用户提问】：${MOCK_USER_QUERY}
-`;
-
-    // 5. 【驱动大模型推理】将组装好的 Prompt 发送给本地的 deepseek-r1:1.5b
-    // 注意：关闭 stream 模式，方便我们在盲跑阶段在控制台一整块打印出来
-    const ollamaResponse = await fetch('http://127.0.0.1:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'deepseek-r1:1.5b',
-        prompt: formattedPrompt,
-        stream: false,
-      }),
-    });
-
-    if (!ollamaResponse.ok) {
-      throw new Error(`Ollama 推理失败: ${ollamaResponse.statusText}`);
-    }
-
-    const aiData = (await ollamaResponse.json()) as { response: string };
-
-    // =======================================================
-    // 🚨 终点线验证：直接在你的 Mac 终端（Terminal）里高亮打印结果
-    // =======================================================
-    console.log('=======================================================');
-    console.log('📥 [用户输入]:', MOCK_USER_QUERY);
-    console.log('📚 [RAG 捞出的规范]:\n', relevantDoc);
-    console.log('🤖 [DeepSeek-R1 满血输出（含 <think> 思考链）]:\n');
-    console.log(aiData.response);
-    console.log('=======================================================\n');
-
-    return NextResponse.json({
-      success: true,
-      message:
-        '第一战役核心骨架管道全线打通！请看你的 VS Code 终端控制台输出。',
-      data: aiData.response,
-    });
-  } catch (error) {
-    const err = error as Error;
-    console.error('❌ 盲跑管道发生崩溃:', err.message);
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 500 },
-    );
+    contextDocs = await vectorService.queryKnowledge(latestUserMessage);
+  } catch (err) {
+    console.error('Chroma 检索失败，降级运行:', err);
   }
+
+  // 将本地知识作为大模型的 System Prompt
+  const systemPrompt = `你是一个基于本地知识库构建的 AI 助手。
+  请结合以下参考资料回答用户的问题。如果资料中没有相关信息，请拒绝回答，不要胡乱编造。
+
+  【参考资料】：
+  ${contextDocs.join('\n---\n')}
+  `;
+
+  // 【调用 DeepSeek】启动流式渲染
+  const result = streamText({
+    model: ollama('deepseek-r1:1.5b'),
+    system: systemPrompt,
+    messages: await convertToModelMessages(messages),
+    // 流结束后的生命周期钩子，负责最终把结果 atomic 写进 MySQL
+    onFinish: async ({ text, reasoningText }) => {
+      // TODO 暂时关闭
+      return;
+      try {
+        await messageService.saveAssistantMessage(
+          sessionId,
+          text,
+          reasoningText ?? '',
+        );
+      } catch (dbErr) {
+        console.error('MySQL 写入历史对白失败:', dbErr);
+      }
+    },
+  });
+
+  return result.toUIMessageStreamResponse();
 }
