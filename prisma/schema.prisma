@@ -21,8 +21,7 @@ model Message {
   id        String      @id @default(uuid())
   sessionId String
   role      String
-  content   String      @db.Text
-  reasoning String?     @db.Text
+  parts     Json
   createdAt DateTime    @default(now())
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
