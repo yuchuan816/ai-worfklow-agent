@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # docker
-/volumes
+/docker-volumes
 /src/generated/prisma
 
 /generated/prisma

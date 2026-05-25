@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { ChromaDebugService } from '@/services/debug-chroma.service';
-import { withApiHandler } from '@/lib/api-handler';
+import { badRequest, successResponse, withApiHandler } from '@/lib/api-handler';
 
 const service = new ChromaDebugService();
 
@@ -11,8 +11,11 @@ const service = new ChromaDebugService();
  */
 export const GET = withApiHandler(async (req: NextRequest) => {
   const name = req.nextUrl.searchParams.get('name');
-  const data = name ? await service.getCollectionInfo(name) : await service.listAllCollections();
-  return NextResponse.json({ success: true, ...data });
+  const pageSize = Number(req.nextUrl.searchParams.get('pageSize')) ?? 10;
+  const result = name
+    ? await service.getCollectionInfo(name, pageSize)
+    : await service.listAllCollections();
+  return successResponse(result);
 });
 
 /**
@@ -21,7 +24,7 @@ export const GET = withApiHandler(async (req: NextRequest) => {
  */
 export const POST = withApiHandler(async () => {
   const result = await service.initTestCollection();
-  return NextResponse.json({ success: true, ...result });
+  return successResponse(result);
 });
 
 /**
@@ -30,8 +33,8 @@ export const POST = withApiHandler(async () => {
  */
 export const DELETE = withApiHandler(async (req: NextRequest) => {
   const name = req.nextUrl.searchParams.get('name');
-  if (!name) return NextResponse.json({ success: false, error: '缺少 name 参数' }, { status: 400 });
+  if (!name) return badRequest('缺少 name 参数');
 
   const result = await service.deleteCollection(name);
-  return NextResponse.json({ success: true, ...result });
+  return successResponse(result);
 });

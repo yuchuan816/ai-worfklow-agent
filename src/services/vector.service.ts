@@ -32,7 +32,7 @@ export class VectorService {
       nResults: limit,
     });
 
-    return (response.documents[0] as string[]) || [];
+    return (response.documents[0] as string[]) ?? [];
   }
 
   /**

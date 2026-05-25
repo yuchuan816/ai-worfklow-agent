@@ -1,11 +1,17 @@
-// lib/chroma.ts
 import { ChromaClient } from 'chromadb';
+
+const chromaHost = process.env.CHROMA_HOST;
+const chromaPort = Number(process.env.CHROMA_PORT);
+if (!chromaHost || !chromaPort) {
+  throw new Error(
+    '❌ [Env Error]: 缺少必要的 Chroma 凭证配置。请检查环境变量 CHROMA_HOST 和 CHROMA_PORT 是否正确注入。',
+  );
+}
 
 const chromaClientSingleton = () => {
   return new ChromaClient({
-    // 💡 这里的连接地址后面会优化
-    host: process.env.CHROMA_HOST || 'localhost',
-    port: parseInt(process.env.CHROMA_PORT || '8000', 10),
+    host: chromaHost,
+    port: chromaPort,
   });
 };
 

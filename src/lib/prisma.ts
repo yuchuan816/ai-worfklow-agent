@@ -3,7 +3,6 @@ import { PrismaClient } from '@/generated/prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 const prismaClientSingleton = () => {
-  // 解析你的本地 DATABASE_URL（例如：mysql://root:password@localhost:3306/mydb）
   // 也可以直接在这里硬编码本地参数
   const adapter = new PrismaMariaDb({
     host: process.env.DATABASE_HOST,
@@ -13,11 +12,9 @@ const prismaClientSingleton = () => {
     database: process.env.DATABASE_NAME,
     connectionLimit: 20,
 
-    // ssl: false,
-    // allowPublicKeyRetrieval: true,
+    allowPublicKeyRetrieval: true,
   });
 
-  // 此时将适配器传入，TypeScript 类型校验通过，且不会再索要 accelerateUrl
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV !== 'production' ? ['error'] : ['query', 'error', 'warn'],

@@ -10,7 +10,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - ./volumes/mysql_data:/var/lib/mysql
+      - ./docker-volumes/mysql_data:/var/lib/mysql
 
   # 向量数据库：用于 RAG 存储规范文本的向量片段
   chromadb:
@@ -20,7 +20,7 @@ services:
     ports:
       - '8000:8000'
     volumes:
-      - ./volumes/chroma_data:/chroma/data
+      - ./docker-volumes/chroma_data:/data
 
   # OSS
   minio:
@@ -33,5 +33,5 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
     volumes:
-      - ./volumes/minio_data:/data
+      - ./docker-volumes/minio_data:/data
     command: server /data --console-address ":9001"

@@ -17,11 +17,11 @@ export class ChromaDebugService {
     };
   }
 
-  async getCollectionInfo(name: string) {
+  async getCollectionInfo(name: string, limit: number) {
     const collection = await chromaClient.getCollection({ name });
     const count = await collection.count();
     const preview = await collection.get({
-      limit: 10,
+      limit,
       include: ['documents', 'metadatas'],
     });
 

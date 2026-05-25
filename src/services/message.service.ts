@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export class MessageService {
   // 获取最近的对话上下文
-  async getHistory(sessionId: string, limit = 6) {
+  static async getHistory(sessionId: string, limit = 6) {
     return await prisma.message.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'asc' },
@@ -12,13 +12,13 @@ export class MessageService {
   }
 
   // 原子化持久化 AI 的最终回答与深度思考链
-  async saveAssistantMessage(sessionId: string, content: string, reasoning: string) {
+  static async saveAssistantMessage(sessionId: string, content: string, reasoning: string) {
     return await prisma.message.create({
       data: {
         sessionId,
         role: 'assistant',
         content,
-        reasoning: reasoning || null,
+        reasoning: reasoning,
       },
     });
   }
