@@ -20,7 +20,7 @@ export class ChatService {
     // 从最新的 UIMessage 结构的 parts 中提取纯文本，用于向量检索
     const lastUserContent = lastMessage.parts?.find((p: any) => p.type === 'text')?.text ?? '';
 
-    // 1. 持久化用户消息：直接将前端完整的 parts 数组写入数据库 Json 字段
+    // 持久化用户消息：直接将前端完整的 parts 数组写入数据库 Json 字段
     await prisma.message.create({
       data: {
         sessionId,
@@ -29,7 +29,7 @@ export class ChatService {
       },
     });
 
-    // 2.【知识检索】去本地 Chroma 寻找与用户提问语义相近的本地文档
+    //【知识检索】去本地 Chroma 寻找与用户提问语义相近的本地文档
     let contextDocs: string[] = [];
     if (lastUserContent) {
       try {
@@ -39,16 +39,22 @@ export class ChatService {
       }
     }
 
-    // 3. 组装符合 RAG 规范的 System Prompt
+    // 组装符合 RAG 规范的 System Prompt
     const systemPrompt = `你是一个基于本地知识库构建的 AI 助手。
-请结合以下参考资料回答用户的问题。如果资料中没有相关信息，请拒绝回答，不要胡乱编造。
+    请结合以下参考资料回答用户的问题。如果资料中没有相关信息，请拒绝回答，不要胡乱编造。
+    
+    <context>
+    ${contextDocs
+      .map(
+        (doc, index) => `<document id="${index + 1}">
+    ${doc}
+    </document>`,
+      )
+      .join('\n')}
+    </context>
+    `;
 
-【参考资料】：
-${contextDocs.join('\n---\n')}
-`;
-
-    console.log('====== systemPrompt', systemPrompt);
-    // 4.【调用大模型】启动 DeepSeek 流式渲染并返回 result 对象
+    //【调用大模型】启动 DeepSeek 流式渲染并返回 result 对象
     return streamText({
       model: ollama('deepseek-r1:1.5b'),
       system: systemPrompt,
