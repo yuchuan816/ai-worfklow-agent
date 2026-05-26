@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
-import { SessionsService } from '@/services/sessions.service';
+import { deleteSession } from '@/services/sessions.service';
 import { withApiHandler, successResponse, badRequest } from '@/lib/api-handler';
-import { MessageService } from '@/services/message.service';
+import { getHistory } from '@/services/message.service';
 
 interface SessionParams {
   id: string;
@@ -14,7 +14,7 @@ export const GET = withApiHandler(
 
     if (!sessionId) return badRequest('缺少会话 ID');
 
-    const messages = await MessageService.getHistory(sessionId);
+    const messages = await getHistory(sessionId);
 
     return successResponse(messages);
   },
@@ -27,7 +27,7 @@ export const DELETE = withApiHandler(
 
     if (!sessionId) return badRequest('缺少会话 ID');
 
-    await SessionsService.deleteSession(sessionId);
+    await deleteSession(sessionId);
 
     return successResponse({ message: '会话删除成功' });
   },

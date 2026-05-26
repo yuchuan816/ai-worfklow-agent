@@ -1,8 +1,11 @@
 import { type NextRequest } from 'next/server';
-import { ChromaDebugService } from '@/services/debug-chroma.service';
+import {
+  getCollectionInfo,
+  listAllCollections,
+  initTestCollection,
+  deleteCollection,
+} from '@/services/debug-chroma.service';
 import { badRequest, successResponse, withApiHandler } from '@/lib/api-handler';
-
-const service = new ChromaDebugService();
 
 /**
  * 【GET】获取数据
@@ -12,9 +15,7 @@ const service = new ChromaDebugService();
 export const GET = withApiHandler(async (req: NextRequest) => {
   const name = req.nextUrl.searchParams.get('name');
   const pageSize = Number(req.nextUrl.searchParams.get('pageSize')) ?? 10;
-  const result = name
-    ? await service.getCollectionInfo(name, pageSize)
-    : await service.listAllCollections();
+  const result = name ? await getCollectionInfo(name, pageSize) : await listAllCollections();
   return successResponse(result);
 });
 
@@ -23,7 +24,7 @@ export const GET = withApiHandler(async (req: NextRequest) => {
  * - /api/debug-chroma
  */
 export const POST = withApiHandler(async () => {
-  const result = await service.initTestCollection();
+  const result = await initTestCollection();
   return successResponse(result);
 });
 
@@ -35,6 +36,6 @@ export const DELETE = withApiHandler(async (req: NextRequest) => {
   const name = req.nextUrl.searchParams.get('name');
   if (!name) return badRequest('缺少 name 参数');
 
-  const result = await service.deleteCollection(name);
+  const result = await deleteCollection(name);
   return successResponse(result);
 });

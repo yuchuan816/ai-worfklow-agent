@@ -1,10 +1,10 @@
 import { type NextRequest } from 'next/server';
-import { SessionsService } from '@/services/sessions.service';
+import { getSessions, createSession } from '@/services/sessions.service';
 import { withApiHandler, successResponse } from '@/lib/api-handler';
 
 // 获取所有会话
 export const GET = withApiHandler(async () => {
-  const sessions = await SessionsService.getSessions();
+  const sessions = await getSessions();
   return successResponse(sessions);
 });
 
@@ -16,6 +16,6 @@ export const POST = withApiHandler(async (req: NextRequest) => {
     title = body.title;
   } catch {}
 
-  const newSession = await SessionsService.createSession(title);
+  const newSession = await createSession(title);
   return successResponse(newSession);
 });

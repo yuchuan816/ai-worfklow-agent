@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { KnowledgeService } from '@/services/knowledge.service';
+import { importMarkdownFile } from '@/services/knowledge.service';
 import { badRequest, successResponse, withApiHandler } from '@/lib/api-handler';
 
 export const POST = withApiHandler(async (req: NextRequest) => {
@@ -10,7 +10,7 @@ export const POST = withApiHandler(async (req: NextRequest) => {
     return badRequest('请上传有效的 Markdown 文件');
   }
 
-  const result = await KnowledgeService.importMarkdownFile(file);
+  const result = await importMarkdownFile(file);
 
   return successResponse(result);
 });
