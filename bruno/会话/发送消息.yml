@@ -1,0 +1,32 @@
+info:
+  name: 发送消息
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3000/api/chat
+  body:
+    type: json
+    data: |-
+      {
+        "sessionId": "d4f5dfc4-e265-43fc-8ee2-89fda18bef62",
+        "messages": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "type": "text",
+                "text": "模型分类有哪些"
+              }
+            ]
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
