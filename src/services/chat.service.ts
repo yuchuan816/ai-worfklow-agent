@@ -1,7 +1,8 @@
-import { streamText, convertToModelMessages } from 'ai';
+import { type UIDataTypes, type UIMessage, streamText, convertToModelMessages } from 'ai';
 import { ollama } from 'ollama-ai-provider-v2';
 import { prisma } from '@/lib/prisma';
 import { VectorService } from '@/services/vector.service';
+import type { InputJsonValue } from '@prisma/client/runtime/client';
 
 const vectorService = new VectorService();
 
@@ -11,23 +12,23 @@ export class ChatService {
    * @param sessionId 聊天会话 ID
    * @param messages 前端传过来的完整历史对白（数组元素符合 5.0 的 UIMessage 规范）
    */
-  static async streamChatFlow(sessionId: string, messages: any[]) {
+  static async streamChatFlow(sessionId: string, messages: UIMessage[]) {
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage) {
       throw new Error('消息列表不能为空');
     }
-
-    // 从最新的 UIMessage 结构的 parts 中提取纯文本，用于向量检索
-    const lastUserContent = lastMessage.parts?.find((p: any) => p.type === 'text')?.text ?? '';
 
     // 持久化用户消息：直接将前端完整的 parts 数组写入数据库 Json 字段
     await prisma.message.create({
       data: {
         sessionId,
         role: lastMessage.role,
-        parts: lastMessage.parts as any, // 确保接入 Prisma 的 InputJsonValue 类型
+        parts: lastMessage.parts as InputJsonValue,
       },
     });
+
+    // 从最新的 UIMessage 结构的 parts 中提取纯文本，用于向量检索
+    const lastUserContent = lastMessage.parts?.find((p) => p.type === 'text')?.text ?? '';
 
     //【知识检索】去本地 Chroma 寻找与用户提问语义相近的本地文档
     let contextDocs: string[] = [];
@@ -64,9 +65,9 @@ export class ChatService {
       onFinish: async ({ text, reasoningText }) => {
         try {
           // 构造符合 AI SDK 5.0 规范的 Assistant Parts 数组
-          const assistantParts: any[] = [];
+          const assistantParts: UIDataTypes[] = [];
 
-          // 【待确认】若存在 DeepSeek 的思考内容，以标准 reasoning 类型节点推入数组
+          // 若存在 DeepSeek 的思考内容，以标准 reasoning 类型节点推入数组
           if (reasoningText) {
             assistantParts.push({
               type: 'reasoning',
@@ -86,7 +87,7 @@ export class ChatService {
               data: {
                 sessionId,
                 role: 'assistant',
-                parts: assistantParts as any, // 完整存储多节点 Part 数组
+                parts: assistantParts as InputJsonValue,
               },
             }),
             prisma.chatSession.update({

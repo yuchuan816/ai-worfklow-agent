@@ -43,6 +43,7 @@ export default function ChatPage() {
       try {
         const res = await fetch(`/api/sessions/${currentSessionId}`);
         const json = await res.json();
+        console.log('====== json', json);
         if (json.success && Array.isArray(json.data)) {
           setMessages(json.data);
         } else {
@@ -148,18 +149,18 @@ export default function ChatPage() {
         {currentSessionId ? (
           <>
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.map((m) => (
+              {messages.map((item) => (
                 <div
-                  key={m.id}
-                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  key={item.id}
+                  className={`flex ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
-                      m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-900'
+                      item.role === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-900'
                     }`}
                   >
-                    {m.parts?.map((part, idx) => {
-                      // 1. 深度渲染：优雅承载 DeepSeek 的思考流 (reasoning)
+                    {item?.parts?.map((part, idx) => {
+                      // 深度渲染：优雅承载 DeepSeek 的思考流 (reasoning)
                       if (part.type === 'reasoning') {
                         return (
                           <div
@@ -169,11 +170,11 @@ export default function ChatPage() {
                             <div className="font-semibold text-[10px] uppercase tracking-wider text-zinc-400 not-italic mb-1">
                               Thinking Process:
                             </div>
-                            {/* <span className="whitespace-pre-wrap">{part.reasoning}</span> */}
+                            <span className="whitespace-pre-wrap">{part.text}</span>
                           </div>
                         );
                       }
-                      // 2. 标准文本渲染
+                      // 标准文本渲染
                       if (part.type === 'text') {
                         return (
                           <span key={idx} className="whitespace-pre-wrap">
