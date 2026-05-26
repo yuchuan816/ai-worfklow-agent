@@ -12,8 +12,7 @@ if (!accessKeyId || !secretAccessKey) {
 
 // 2. 初始化 S3Client
 export const s3Client = new S3Client({
-  // 非核心配置项：使用空值合并操作符 (??) 提供本地 Docker 默认值兜底
-  endpoint: process.env.MINIO_ENDPOINT ?? 'http://localhost:9000',
+  endpoint: process.env.MINIO_ENDPOINT,
   region: 'us-east-1',
   credentials: {
     accessKeyId,
