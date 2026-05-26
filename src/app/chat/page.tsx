@@ -43,7 +43,6 @@ export default function ChatPage() {
       try {
         const res = await fetch(`/api/sessions/${currentSessionId}`);
         const json = await res.json();
-        console.log('====== json', json);
         if (json.success && Array.isArray(json.data)) {
           setMessages(json.data);
         } else {
